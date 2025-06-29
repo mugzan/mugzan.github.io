@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import Header from './components/Header.tsx';
 import Hero from './components/Hero.tsx';
 import ProductGrid from './components/ProductGrid.tsx';
-import Banner from './components/Banner.tsx';
 import Footer from './components/Footer.tsx';
 import ProductDetail from './components/ProductDetail.tsx';
 import CartPage from './components/CartPage.tsx';

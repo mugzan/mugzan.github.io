@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLanguage, Language } from '../context/LanguageContext';
 
 const LanguageSelector: React.FC = () => {
-  const { language, setLanguage, t } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
 
   const languages: { code: Language; name: string; flag: string }[] = [
