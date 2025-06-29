@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useProduct } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
+import { useOrder } from '../context/OrderContext';
 import { useLanguage } from '../context/LanguageContext';
 
 interface ProductDetailProps {
@@ -10,6 +11,7 @@ interface ProductDetailProps {
 const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
   const { getProduct } = useProduct();
   const { addToCart } = useCart();
+  const { createOrder } = useOrder();
   const { t } = useLanguage();
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
@@ -30,18 +32,47 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
     );
   }
 
-  const handleAddToCart = () => {
+  const validateSelection = () => {
     if (product.sizes && product.sizes.length > 0 && !selectedSize) {
       alert(t('product.selectsize'));
-      return;
+      return false;
     }
     if (product.colors && product.colors.length > 0 && !selectedColor) {
       alert(t('product.selectcolor'));
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const handleAddToCart = () => {
+    if (!validateSelection()) return;
 
     addToCart(product, quantity, selectedSize, selectedColor);
     alert(t('product.addedtocart'));
+  };
+
+  const handleBuyNow = () => {
+    if (!validateSelection()) return;
+
+    // 임시 장바구니 아이템 생성
+    const tempCartItem = {
+      id: Date.now(),
+      product,
+      quantity,
+      size: selectedSize,
+      color: selectedColor
+    };
+
+    // 임시 배송 정보로 바로 결제 페이지로 이동
+    // localStorage에 임시 주문 정보 저장
+    const tempOrderData = {
+      items: [tempCartItem],
+      total: product.price * quantity,
+      isBuyNow: true
+    };
+    
+    localStorage.setItem('tempBuyNowOrder', JSON.stringify(tempOrderData));
+    window.location.hash = '#/buy-now-checkout';
   };
 
   return (
@@ -150,13 +181,16 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
           {/* 구매 버튼 */}
           <div className="space-y-4 pt-8">
             <button
-              onClick={handleAddToCart}
+              onClick={handleBuyNow}
               className="w-full bg-black text-white py-4 text-sm font-light tracking-wide hover:bg-gray-800 transition-colors"
             >
-              {t('product.addtocart')}
-            </button>
-            <button className="w-full border border-black text-black py-4 text-sm font-light tracking-wide hover:bg-black hover:text-white transition-colors">
               {t('product.buynow')}
+            </button>
+            <button
+              onClick={handleAddToCart}
+              className="w-full border border-black text-black py-4 text-sm font-light tracking-wide hover:bg-black hover:text-white transition-colors"
+            >
+              {t('product.addtocart')}
             </button>
           </div>
         </div>

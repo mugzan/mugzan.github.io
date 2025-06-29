@@ -4,7 +4,7 @@ import { User } from '../types';
 interface UserContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string, name: string) => Promise<boolean>;
+  register: (email: string, password: string, name: string, additionalInfo?: any) => Promise<boolean>;
   logout: () => void;
   isLoggedIn: boolean;
   isAdmin: boolean;
@@ -30,7 +30,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return false;
   };
 
-  const register = async (email: string, password: string, name: string): Promise<boolean> => {
+  const register = async (email: string, password: string, name: string, additionalInfo?: any): Promise<boolean> => {
     const existingUser = SAMPLE_USERS.find(u => u.email === email);
     if (existingUser) {
       return false;
@@ -41,11 +41,12 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       email,
       password,
       name,
-      isAdmin: false
+      isAdmin: false,
+      ...additionalInfo // 추가 정보 (전화번호, 생년월일, 성별 등)
     };
     
     SAMPLE_USERS.push(newUser);
-    setUser({ id: newUser.id, email: newUser.email, name: newUser.name, isAdmin: newUser.isAdmin });
+    // 회원가입 후 자동 로그인하지 않음 - 사용자가 직접 로그인하도록 함
     return true;
   };
 

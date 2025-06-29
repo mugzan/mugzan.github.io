@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useCart } from '../context/CartContext';
 import { useOrder } from '../context/OrderContext';
 import { useAddress } from '../context/AddressContext';
 import { useUser } from '../context/UserContext';
@@ -7,13 +6,13 @@ import AddressSelector from './AddressSelector';
 import AddressForm from './AddressForm';
 import PaymentPage from './PaymentPage';
 
-const CheckoutPage: React.FC = () => {
-  const { items, getTotalPrice } = useCart();
+const BuyNowCheckoutPage: React.FC = () => {
   const { createOrder } = useOrder();
   const { getDefaultAddress } = useAddress();
   const { user } = useUser();
   const [step, setStep] = useState<'shipping' | 'payment'>('shipping');
   const [orderId, setOrderId] = useState<string>('');
+  const [orderData, setOrderData] = useState<any>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
   
   const [shippingInfo, setShippingInfo] = useState({
@@ -24,8 +23,17 @@ const CheckoutPage: React.FC = () => {
     detailAddress: ''
   });
 
-  // 컴포넌트 마운트 시 기본 배송지 로드
   useEffect(() => {
+    // localStorage에서 임시 주문 데이터 가져오기
+    const tempOrder = localStorage.getItem('tempBuyNowOrder');
+    if (tempOrder) {
+      setOrderData(JSON.parse(tempOrder));
+    } else {
+      // 임시 주문 데이터가 없으면 홈으로 리다이렉트
+      window.location.hash = '#/';
+    }
+
+    // 기본 배송지 로드
     if (user) {
       const defaultAddress = getDefaultAddress(user.id);
       if (defaultAddress) {
@@ -62,35 +70,38 @@ const CheckoutPage: React.FC = () => {
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (items.length === 0) {
-      alert('장바구니가 비어있습니다.');
+    if (!orderData) {
+      alert('주문 정보가 없습니다.');
       return;
     }
 
     // 주문 생성 (결제 대기 상태)
-    const newOrderId = createOrder(items, shippingInfo);
+    const newOrderId = createOrder(orderData.items, shippingInfo);
     setOrderId(newOrderId);
     setStep('payment');
+    
+    // 임시 주문 데이터 삭제
+    localStorage.removeItem('tempBuyNowOrder');
   };
 
-  if (items.length === 0) {
+  if (!orderData) {
     return (
       <div className="max-w-screen-2xl mx-auto px-4 py-16">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">장바구니가 비어있습니다</h1>
-          <a href="#/" className="text-blue-600 hover:text-blue-800">쇼핑 계속하기</a>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">주문 정보를 찾을 수 없습니다</h1>
+          <a href="#/" className="text-blue-600 hover:text-blue-800">홈으로 돌아가기</a>
         </div>
       </div>
     );
   }
 
   if (step === 'payment') {
-    return <PaymentPage orderId={orderId} shippingInfo={shippingInfo} />;
+    return <PaymentPage orderId={orderId} shippingInfo={shippingInfo} items={orderData.items} total={orderData.total} />;
   }
 
   return (
     <div className="max-w-screen-2xl mx-auto px-4 py-16">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">주문/결제</h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">바로 주문하기</h1>
       
       {/* 진행 단계 표시 */}
       <div className="flex items-center justify-center mb-12">
@@ -130,7 +141,7 @@ const CheckoutPage: React.FC = () => {
               />
             )}
 
-            {/* 직접 입력 폼 (주소가 선택되지 않았거나 수정이 필요한 경우) */}
+            {/* 직접 입력 폼 */}
             {!showAddressForm && (
               <div className="mt-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">배송 정보 {shippingInfo.name && '(수정)'}</h3>
@@ -224,7 +235,7 @@ const CheckoutPage: React.FC = () => {
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-bold text-gray-900 mb-4">주문 상품</h2>
             <div className="space-y-4">
-              {items.map((item) => (
+              {orderData.items.map((item: any) => (
                 <div key={item.id} className="flex items-center space-x-4">
                   <img
                     src={item.product.image}
@@ -252,7 +263,7 @@ const CheckoutPage: React.FC = () => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>상품 금액</span>
-                <span>{getTotalPrice().toLocaleString()}원</span>
+                <span>{orderData.total.toLocaleString()}원</span>
               </div>
               <div className="flex justify-between">
                 <span>배송비</span>
@@ -260,7 +271,7 @@ const CheckoutPage: React.FC = () => {
               </div>
               <div className="border-t pt-2 flex justify-between font-bold text-lg">
                 <span>총 결제 금액</span>
-                <span>{getTotalPrice().toLocaleString()}원</span>
+                <span>{orderData.total.toLocaleString()}원</span>
               </div>
             </div>
             
@@ -278,4 +289,4 @@ const CheckoutPage: React.FC = () => {
   );
 };
 
-export default CheckoutPage;
+export default BuyNowCheckoutPage;

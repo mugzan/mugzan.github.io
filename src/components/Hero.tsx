@@ -38,10 +38,10 @@ const Hero: React.FC<HeroProps> = ({ images }) => {
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center text-white max-w-2xl px-4">
           <h1 className="text-4xl md:text-6xl font-light mb-6 tracking-wide">
-            {t('hero.title')}
+            {t('hero.title')} - 새로운 스타일
           </h1>
           <p className="text-lg md:text-xl mb-8 font-light opacity-90">
-            {t('hero.subtitle')}
+            {t('hero.subtitle')} - 지금 바로 만나보세요!
           </p>
           <a
             href="#/products"

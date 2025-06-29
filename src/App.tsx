@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Header from './components/Header.tsx';
 import Hero from './components/Hero.tsx';
 import ProductGrid from './components/ProductGrid.tsx';
+import Banner from './components/Banner.tsx';
 import Footer from './components/Footer.tsx';
 import ProductDetail from './components/ProductDetail.tsx';
 import CartPage from './components/CartPage.tsx';
@@ -10,9 +11,12 @@ import LoginPage from './components/LoginPage.tsx';
 import RegistrationPage from './components/RegistrationPage.tsx';
 import MyPage from './components/MyPage.tsx';
 import CheckoutPage from './components/CheckoutPage.tsx';
+import BuyNowCheckoutPage from './components/BuyNowCheckoutPage.tsx';
 import OrderConfirmationPage from './components/OrderConfirmationPage.tsx';
 import AdminPage from './components/AdminPage.tsx';
 import ProductForm from './components/ProductForm.tsx';
+import ShippingInfoPage from './components/ShippingInfoPage.tsx';
+import ReturnsExchangesPage from './components/ReturnsExchangesPage.tsx';
 import ProtectedRoute from './components/ProtectedRoute.tsx';
 
 import { HERO_IMAGES } from './constants.ts';
@@ -20,6 +24,7 @@ import { ProductProvider, useProduct } from './context/ProductContext.tsx';
 import { CartProvider } from './context/CartContext.tsx';
 import { UserProvider } from './context/UserContext.tsx';
 import { OrderProvider } from './context/OrderContext.tsx';
+import { AddressProvider } from './context/AddressContext.tsx';
 import { LanguageProvider, useLanguage } from './context/LanguageContext.tsx';
 
 const HomePage = () => {
@@ -126,10 +131,16 @@ const AppContent: React.FC = () => {
         return <ProtectedRoute><MyPage /></ProtectedRoute>;
       case '#/checkout':
         return <ProtectedRoute><CheckoutPage /></ProtectedRoute>;
+      case '#/buy-now-checkout':
+        return <ProtectedRoute><BuyNowCheckoutPage /></ProtectedRoute>;
       case '#/admin':
         return <ProtectedRoute adminOnly={true}><AdminPage /></ProtectedRoute>;
       case '#/admin/add':
         return <ProtectedRoute adminOnly={true}><ProductForm /></ProtectedRoute>;
+      case '#/shipping-info':
+        return <ShippingInfoPage />;
+      case '#/returns-exchanges':
+        return <ReturnsExchangesPage />;
       case '#/':
       default:
         return <HomePage />;
@@ -152,11 +163,13 @@ const App: React.FC = () => {
     <LanguageProvider>
       <ProductProvider>
         <UserProvider>
-          <OrderProvider>
-            <CartProvider>
-              <AppContent />
-            </CartProvider>
-          </OrderProvider>
+          <AddressProvider>
+            <OrderProvider>
+              <CartProvider>
+                <AppContent />
+              </CartProvider>
+            </OrderProvider>
+          </AddressProvider>
         </UserProvider>
       </ProductProvider>
     </LanguageProvider>

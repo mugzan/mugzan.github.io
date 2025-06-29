@@ -19,11 +19,26 @@ export interface CartItem {
   color?: string;
 }
 
+export interface ShippingAddress {
+  id: number;
+  name: string;
+  phone: string;
+  zipCode: string;
+  address: string;
+  detailAddress: string;
+  isDefault: boolean;
+  userId: number;
+}
+
 export interface User {
   id: number;
   email: string;
   name: string;
   isAdmin?: boolean;
+  phone?: string;
+  birthDate?: string;
+  gender?: string;
+  agreeMarketing?: boolean;
 }
 
 export interface Order {
@@ -32,6 +47,8 @@ export interface Order {
   items: CartItem[];
   total: number;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered';
+  paymentStatus: 'pending' | 'pending_payment' | 'paid' | 'failed';
+  paymentMethod?: 'card' | 'bank' | 'kakao' | 'naver';
   createdAt: Date;
   shippingAddress: {
     name: string;

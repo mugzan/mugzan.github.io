@@ -22,7 +22,10 @@ const LoginPage: React.FC = () => {
   return (
     <div className="max-w-md mx-auto px-4 py-16">
       <div className="bg-white p-8 rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-center text-gray-900 mb-8">로그인</h1>
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-medium text-black tracking-wide mb-6">KLYP</h1>
+          <h2 className="text-xl font-light text-gray-900">로그인</h2>
+        </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>

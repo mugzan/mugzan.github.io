@@ -14,13 +14,17 @@ const Header: React.FC = () => {
     window.location.hash = '#/';
   };
 
+  const handleContactClick = () => {
+    window.open('https://open.kakao.com/o/s83SsoEh', '_blank');
+  };
+
   return (
     <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* 로고 */}
           <div className="flex items-center">
-            <a href="#/" className="text-2xl font-light text-black tracking-wide">
+            <a href="#/" className="text-2xl font-semibold text-black tracking-wide">
               KLYP
             </a>
           </div>
@@ -36,9 +40,12 @@ const Header: React.FC = () => {
             <a href="#/about" className="text-sm text-gray-700 hover:text-black transition-colors font-light">
               {t('nav.about')}
             </a>
-            <a href="#/contact" className="text-sm text-gray-700 hover:text-black transition-colors font-light">
+            <button
+              onClick={handleContactClick}
+              className="text-sm text-gray-700 hover:text-black transition-colors font-light cursor-pointer"
+            >
               {t('nav.contact')}
-            </a>
+            </button>
           </nav>
 
           {/* 우측 메뉴 */}

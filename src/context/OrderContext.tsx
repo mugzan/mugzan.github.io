@@ -7,6 +7,7 @@ interface OrderContextType {
   getOrder: (id: string) => Order | undefined;
   getUserOrders: (userId: number) => Order[];
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
+  updateOrderPayment: (orderId: string, paymentStatus: Order['paymentStatus'], paymentMethod: Order['paymentMethod']) => void;
   getOrderStats: () => {
     totalOrders: number;
     totalRevenue: number;
@@ -31,6 +32,8 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       items,
       total,
       status: 'pending',
+      paymentStatus: 'pending',
+      paymentMethod: undefined,
       createdAt: new Date(),
       shippingAddress
     };
@@ -53,9 +56,20 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     ));
   };
 
+  const updateOrderPayment = (orderId: string, paymentStatus: Order['paymentStatus'], paymentMethod: Order['paymentMethod']) => {
+    setOrders(prev => prev.map(order => 
+      order.id === orderId ? { 
+        ...order, 
+        paymentStatus, 
+        paymentMethod,
+        status: paymentStatus === 'paid' ? 'confirmed' : order.status
+      } : order
+    ));
+  };
+
   const getOrderStats = () => {
     const totalOrders = orders.length;
-    const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+    const totalRevenue = orders.filter(o => o.paymentStatus === 'paid').reduce((sum, order) => sum + order.total, 0);
     const averageOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
     
     const today = new Date();
@@ -68,7 +82,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     // 인기 상품 계산
     const productSales: { [key: string]: { name: string; quantity: number } } = {};
-    orders.forEach(order => {
+    orders.filter(o => o.paymentStatus === 'paid').forEach(order => {
       order.items.forEach(item => {
         const key = item.product.name;
         if (productSales[key]) {
@@ -102,6 +116,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       getOrder,
       getUserOrders,
       updateOrderStatus,
+      updateOrderPayment,
       getOrderStats
     }}>
       {children}

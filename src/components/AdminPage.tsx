@@ -6,7 +6,7 @@ type AdminTab = 'products' | 'orders' | 'sales' | 'shipping';
 
 const AdminPage: React.FC = () => {
   const { products, deleteProduct } = useProduct();
-  const { orders, updateOrderStatus, getOrderStats } = useOrder();
+  const { orders, updateOrderStatus, updateOrderPayment, getOrderStats } = useOrder();
   const [activeTab, setActiveTab] = useState<AdminTab>('products');
 
   const handleDelete = (id: number) => {
@@ -19,7 +19,24 @@ const AdminPage: React.FC = () => {
     updateOrderStatus(orderId, newStatus as any);
   };
 
+  const handlePaymentConfirm = (orderId: string) => {
+    if (confirm('입금을 확인하셨습니까?')) {
+      updateOrderPayment(orderId, 'paid', 'bank');
+      alert('입금이 확인되었습니다. 주문 상태가 "주문확인"으로 변경되었습니다.');
+    }
+  };
+
   const stats = getOrderStats();
+
+  const getPaymentStatusText = (status: string) => {
+    switch (status) {
+      case 'pending': return '결제 대기';
+      case 'pending_payment': return '입금 대기';
+      case 'paid': return '결제 완료';
+      case 'failed': return '결제 실패';
+      default: return status;
+    }
+  };
 
   const renderProducts = () => (
     <div>
@@ -120,6 +137,9 @@ const AdminPage: React.FC = () => {
                 AMOUNT
               </th>
               <th className="px-6 py-4 text-left text-xs font-light text-gray-600 uppercase tracking-wider">
+                PAYMENT STATUS
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-light text-gray-600 uppercase tracking-wider">
                 DATE
               </th>
               <th className="px-6 py-4 text-left text-xs font-light text-gray-600 uppercase tracking-wider">
@@ -143,6 +163,15 @@ const AdminPage: React.FC = () => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-black font-light">
                   ₩{order.total.toLocaleString()}
                 </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-3 py-1 text-xs font-light ${
+                    order.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
+                    order.paymentStatus === 'pending_payment' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {getPaymentStatusText(order.paymentStatus)}
+                  </span>
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-light">
                   {order.createdAt.toLocaleDateString()}
                 </td>
@@ -163,13 +192,21 @@ const AdminPage: React.FC = () => {
                     <option value="delivered">DELIVERED</option>
                   </select>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-light">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-light space-x-2">
+                  {order.paymentStatus === 'pending_payment' && (
+                    <button
+                      onClick={() => handlePaymentConfirm(order.id)}
+                      className="text-green-600 hover:text-green-800 transition-colors"
+                    >
+                      입금확인
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       const orderDetails = order.items.map(item => 
                         `${item.product.name} x ${item.quantity}`
                       ).join('\n');
-                      alert(`Order Details:\n${orderDetails}\n\nShipping Address:\n${order.shippingAddress.address} ${order.shippingAddress.detailAddress}`);
+                      alert(`Order Details:\n${orderDetails}\n\nShipping Address:\n${order.shippingAddress.address} ${order.shippingAddress.detailAddress}\n\nPayment: ${getPaymentStatusText(order.paymentStatus)} (무통장입금)`);
                     }}
                     className="text-gray-600 hover:text-black transition-colors"
                   >
@@ -194,12 +231,14 @@ const AdminPage: React.FC = () => {
           <p className="text-3xl font-light text-black">{stats.totalOrders}</p>
         </div>
         <div className="bg-white border border-gray-100 p-8 text-center">
-          <h3 className="text-xs font-light text-gray-600 uppercase tracking-wider mb-4">TOTAL REVENUE</h3>
+          <h3 className="text-xs font-light text-gray-600 uppercase tracking-wider mb-4">PAID REVENUE</h3>
           <p className="text-3xl font-light text-black">₩{stats.totalRevenue.toLocaleString()}</p>
         </div>
         <div className="bg-white border border-gray-100 p-8 text-center">
-          <h3 className="text-xs font-light text-gray-600 uppercase tracking-wider mb-4">AVERAGE ORDER</h3>
-          <p className="text-3xl font-light text-black">₩{stats.averageOrderValue.toLocaleString()}</p>
+          <h3 className="text-xs font-light text-gray-600 uppercase tracking-wider mb-4">PENDING PAYMENT</h3>
+          <p className="text-3xl font-light text-yellow-600">
+            {orders.filter(o => o.paymentStatus === 'pending_payment').length}
+          </p>
         </div>
         <div className="bg-white border border-gray-100 p-8 text-center">
           <h3 className="text-xs font-light text-gray-600 uppercase tracking-wider mb-4">TODAY'S ORDERS</h3>
@@ -232,14 +271,20 @@ const AdminPage: React.FC = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
         <div className="bg-white border border-gray-100 p-8 text-center">
-          <h3 className="text-xs font-light text-gray-600 uppercase tracking-wider mb-4">PENDING</h3>
+          <h3 className="text-xs font-light text-gray-600 uppercase tracking-wider mb-4">PENDING PAYMENT</h3>
           <p className="text-3xl font-light text-yellow-600">
-            {orders.filter(o => o.status === 'confirmed').length}
+            {orders.filter(o => o.paymentStatus === 'pending_payment').length}
+          </p>
+        </div>
+        <div className="bg-white border border-gray-100 p-8 text-center">
+          <h3 className="text-xs font-light text-gray-600 uppercase tracking-wider mb-4">READY TO SHIP</h3>
+          <p className="text-3xl font-light text-blue-600">
+            {orders.filter(o => o.status === 'confirmed' && o.paymentStatus === 'paid').length}
           </p>
         </div>
         <div className="bg-white border border-gray-100 p-8 text-center">
           <h3 className="text-xs font-light text-gray-600 uppercase tracking-wider mb-4">SHIPPED</h3>
-          <p className="text-3xl font-light text-blue-600">
+          <p className="text-3xl font-light text-purple-600">
             {orders.filter(o => o.status === 'shipped').length}
           </p>
         </div>
@@ -248,10 +293,6 @@ const AdminPage: React.FC = () => {
           <p className="text-3xl font-light text-green-600">
             {orders.filter(o => o.status === 'delivered').length}
           </p>
-        </div>
-        <div className="bg-white border border-gray-100 p-8 text-center">
-          <h3 className="text-xs font-light text-gray-600 uppercase tracking-wider mb-4">TOTAL</h3>
-          <p className="text-3xl font-light text-black">{orders.length}</p>
         </div>
       </div>
 
@@ -272,6 +313,9 @@ const AdminPage: React.FC = () => {
                 CONTACT
               </th>
               <th className="px-6 py-4 text-left text-xs font-light text-gray-600 uppercase tracking-wider">
+                PAYMENT
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-light text-gray-600 uppercase tracking-wider">
                 STATUS
               </th>
               <th className="px-6 py-4 text-left text-xs font-light text-gray-600 uppercase tracking-wider">
@@ -283,7 +327,7 @@ const AdminPage: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
-            {orders.filter(order => order.status !== 'pending').map((order) => (
+            {orders.map((order) => (
               <tr key={order.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-light text-black">
                   {order.id}
@@ -299,11 +343,22 @@ const AdminPage: React.FC = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-3 py-1 text-xs font-light ${
+                    order.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
+                    order.paymentStatus === 'pending_payment' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {getPaymentStatusText(order.paymentStatus)}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-3 py-1 text-xs font-light ${
                     order.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
                     order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
-                    'bg-green-100 text-green-800'
+                    order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                    'bg-gray-100 text-gray-800'
                   }`}>
-                    {order.status === 'confirmed' ? 'READY' :
+                    {order.status === 'pending' ? 'PENDING' :
+                     order.status === 'confirmed' ? 'READY' :
                      order.status === 'shipped' ? 'SHIPPED' : 'DELIVERED'}
                   </span>
                 </td>
@@ -311,7 +366,15 @@ const AdminPage: React.FC = () => {
                   {order.createdAt.toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-light space-x-4">
-                  {order.status === 'confirmed' && (
+                  {order.paymentStatus === 'pending_payment' && (
+                    <button
+                      onClick={() => handlePaymentConfirm(order.id)}
+                      className="text-green-600 hover:text-green-800 transition-colors"
+                    >
+                      입금확인
+                    </button>
+                  )}
+                  {order.status === 'confirmed' && order.paymentStatus === 'paid' && (
                     <button
                       onClick={() => handleStatusUpdate(order.id, 'shipped')}
                       className="text-blue-600 hover:text-blue-800 transition-colors"
